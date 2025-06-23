@@ -1,0 +1,748 @@
+query
+"SELECT i_item_id, i_product_name, i_current_price
+FROM item
+WHERE i_current_price > 50;"
+"SELECT ss.ss_ticket_number, ss.ss_quantity, c.c_first_name, c.c_last_name
+FROM store_sales ss
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+WHERE ss.ss_quantity > 5;"
+"SELECT ws_order_number, ws_quantity, i_item_id, i_item_desc, c_customer_id
+FROM web_sales ws
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+WHERE d.d_year = 2001 AND ws_quantity >= 2;"
+"SELECT i_category, COUNT(*) AS nr_produse, AVG(i_current_price) AS pret_mediu
+FROM item
+GROUP BY i_category
+ORDER BY pret_mediu DESC;"
+"WITH customer_sales AS (
+    SELECT c.c_customer_id, c.c_first_name, c.c_last_name,
+           SUM(ws.ws_ext_sales_price) AS total_sales
+    FROM web_sales ws
+    JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+    JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+    WHERE d.d_year = 2001 AND ws.ws_quantity > 3
+    GROUP BY c.c_customer_id, c.c_first_name, c.c_last_name
+),
+top_customers AS (
+    SELECT *, RANK() OVER (ORDER BY total_sales DESC) AS rnk
+    FROM customer_sales
+)
+SELECT tc.c_customer_id, tc.c_first_name, tc.c_last_name, tc.total_sales
+FROM top_customers tc
+WHERE tc.rnk <= 10;"
+"SELECT d.d_year, i.i_category, SUM(ss_ext_sales_price) AS total_vanzari
+FROM store_sales ss
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+WHERE ss_customer_sk IN (
+    SELECT c_customer_sk
+    FROM customer
+    WHERE c_birth_country = 'UNITED STATES'
+)
+GROUP BY d.d_year, i.i_category
+ORDER BY d.d_year, total_vanzari DESC;"
+"SELECT p.p_promo_name, COUNT(*) AS nr_linii
+FROM web_sales ws
+JOIN promotion p ON ws.ws_promo_sk = p.p_promo_sk
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+GROUP BY p.p_promo_name
+HAVING COUNT(*) > (
+  SELECT COUNT(*) FROM item WHERE i_color = 'red'
+);"
+"WITH promo_impact AS (
+  SELECT p.p_promo_name, i.i_category,
+         CASE WHEN ws.ws_net_paid > 0 THEN 1 ELSE 0 END AS vandut
+  FROM web_sales ws
+  JOIN item i ON ws.ws_item_sk = i.i_item_sk
+  JOIN promotion p ON ws.ws_promo_sk = p.p_promo_sk
+)
+SELECT p_promo_name, i_category, COUNT(*) AS total_linii,
+       SUM(vandut) AS total_vanzari
+FROM promo_impact
+GROUP BY p_promo_name, i_category;"
+"WITH high_revenue_items AS (
+  SELECT i_item_sk, i_product_name
+  FROM item
+  WHERE i_current_price < 150
+)
+SELECT d.d_year, hi.i_product_name, SUM(ss.ss_ext_sales_price) AS total
+FROM store_sales ss
+JOIN LATERAL (
+  SELECT * FROM high_revenue_items hi
+  WHERE hi.i_item_sk = ss.ss_item_sk
+) hi ON true
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+GROUP BY d.d_year, hi.i_product_name
+HAVING SUM(ss.ss_ext_sales_price) > 10000;"
+"WITH ranked_ws AS (
+  SELECT ws_order_number, ws_net_paid,
+         RANK() OVER (ORDER BY ws_net_paid DESC) AS rnk
+  FROM web_sales
+)
+SELECT rnk, COUNT(*) 
+FROM ranked_ws
+GROUP BY rnk
+HAVING rnk < (
+  SELECT AVG(rnk2) FROM (
+    SELECT RANK() OVER (ORDER BY ws_net_paid DESC) AS rnk2 FROM web_sales
+  ) AS x
+);"
+"SELECT ss.ss_ticket_number, i.i_product_name, c.c_email_address
+FROM store_sales ss
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+WHERE ss.ss_sales_price > 80;"
+"SELECT
+    cd.cd_gender,
+    cd.cd_marital_status,
+    cd.cd_education_status,
+    ib.ib_income_band_sk,
+    d.d_year,
+    SUM(ws.ws_ext_sales_price) AS total_revenue
+FROM web_sales ws
+JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+JOIN customer_demographics cd ON c.c_current_cdemo_sk = cd.cd_demo_sk
+JOIN income_band ib ON c.c_current_cdemo_sk = cd.cd_demo_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+WHERE d.d_year BETWEEN 2001 AND 2003
+GROUP BY cd.cd_gender, cd.cd_marital_status, cd.cd_education_status, ib.ib_income_band_sk, d.d_year
+ORDER BY total_revenue DESC;"
+"SELECT ss.ss_ticket_number, c.c_first_name, d.d_date
+FROM store_sales ss
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+WHERE d.d_month_seq = 1200;"
+"SELECT ws_order_number, i_product_name, c_first_name, d_year
+FROM web_sales ws
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+WHERE i_current_price > 50;"
+"SELECT ss.ss_ext_sales_price, i.i_category, c.c_birth_country
+FROM store_sales ss
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+WHERE c.c_birth_country = 'CANADA';"
+"SELECT ws.ws_order_number, i.i_item_id, c.c_first_name, d.d_month_seq
+FROM web_sales ws
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+WHERE d.d_year = 2000;"
+"SELECT i_category, COUNT(*) AS nr_produse
+FROM item
+GROUP BY i_category
+ORDER BY nr_produse DESC;"
+"SELECT d_year, AVG(ws_ext_sales_price) AS medie
+FROM web_sales ws
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+GROUP BY d_year
+HAVING AVG(ws_ext_sales_price) > 100;"
+"SELECT c.c_customer_id, c.c_first_name, c.c_last_name
+FROM customer c
+WHERE c.c_customer_sk IN (
+    SELECT ws.ws_bill_customer_sk
+    FROM web_sales ws
+    JOIN item i ON ws.ws_item_sk = i.i_item_sk
+    WHERE i.i_current_price > 10
+);"
+"SELECT d.d_year, i.i_category, SUM(ss.ss_ext_sales_price) AS total_vanzari
+FROM store_sales ss
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+WHERE c.c_birth_country = 'UNITED STATES'
+GROUP BY d.d_year, i.i_category
+ORDER BY total_vanzari DESC;"
+"WITH big_spenders AS (
+  SELECT ws_bill_customer_sk, SUM(ws_net_paid) AS total
+  FROM web_sales
+  GROUP BY ws_bill_customer_sk
+  HAVING SUM(ws_net_paid) > 10000
+)
+SELECT c.c_first_name, c.c_last_name,
+       (SELECT COUNT(*) FROM store_sales ss WHERE ss.ss_customer_sk = c.c_customer_sk) AS total_store_sales,
+       (SELECT AVG(ws.ws_net_paid) FROM web_sales ws WHERE ws.ws_bill_customer_sk = c.c_customer_sk) AS medie_web,
+       EXISTS (
+         SELECT 1 FROM big_spenders bs WHERE bs.ws_bill_customer_sk = c.c_customer_sk
+       ) AS este_big_spender
+FROM customer c
+WHERE c.c_birth_country = 'UNITED STATES';"
+"SELECT d.d_year, i.i_category, COUNT(*) AS nr_linii
+FROM web_sales ws
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+WHERE ws.ws_net_paid BETWEEN 100 AND 500
+  AND i.i_current_price > 50
+GROUP BY d.d_year, i.i_category;"
+"SELECT c.c_first_name, c.c_last_name
+FROM customer c
+WHERE EXISTS (
+  SELECT 1
+  FROM web_sales ws
+  JOIN item i ON ws.ws_item_sk = i.i_item_sk
+  WHERE ws.ws_bill_customer_sk = c.c_customer_sk
+    AND i.i_current_price > 200
+);"
+"WITH complete_orders AS (
+    SELECT ws_order_number
+    FROM web_sales
+    INTERSECT
+    SELECT cs_order_number
+    FROM catalog_sales
+    INTERSECT
+    SELECT ss_ticket_number
+    FROM store_sales
+)
+SELECT COUNT(*) AS orders_in_all_channels
+FROM complete_orders;"
+"SELECT ws_order_number, i_brand, c_last_name
+FROM web_sales ws
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+WHERE i_brand IS NOT NULL;"
+"SELECT d.d_year, COUNT(*) AS nr_comenzi
+FROM web_sales ws
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+GROUP BY d.d_year
+ORDER BY d.d_year;"
+"SELECT c_first_name, c_last_name
+FROM customer
+WHERE c_customer_sk IN (
+    SELECT ss_customer_sk
+    FROM store_sales
+    WHERE ss_ext_sales_price > 500
+);"
+"SELECT i.i_category, AVG(ss.ss_list_price) AS pret_mediu
+FROM store_sales ss
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+GROUP BY i.i_category
+HAVING AVG(ss.ss_list_price) > (
+  SELECT AVG(ss2.ss_list_price)
+  FROM store_sales ss2
+  WHERE ss2.ss_item_sk IN (
+    SELECT i2.i_item_sk FROM item i2 WHERE i2.i_color = 'green'
+  )
+);"
+"SELECT ss.ss_ticket_number, c.c_customer_id, d.d_year
+FROM store_sales ss
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+WHERE d.d_year = 2001;"
+"SELECT s.s_store_id, d.d_year, i.i_brand, COUNT(ss.ss_ticket_number) AS ticket_count,
+       SUM(ss.ss_net_profit) AS total_profit, MAX(ss.ss_coupon_amt) AS max_coupon_used
+FROM store_sales ss
+JOIN store s ON ss.ss_store_sk = s.s_store_sk
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+WHERE d.d_year BETWEEN 1998 AND 2002
+GROUP BY GROUPING SETS ((s.s_store_id, d.d_year, i.i_brand), (s.s_store_id, d.d_year), (i.i_brand))
+HAVING SUM(ss.ss_net_profit) > 10000
+ORDER BY total_profit DESC
+LIMIT 100;"
+"SELECT i.i_item_id, i.i_category, i.i_product_name,
+       AVG(cs.cs_quantity) FILTER (WHERE d.d_dow IN (6,7)) AS avg_weekend_qty,
+       AVG(cs.cs_quantity) FILTER (WHERE d.d_dow NOT IN (6,7)) AS avg_weekday_qty,
+       CASE
+           WHEN AVG(cs.cs_quantity) FILTER (WHERE d.d_dow IN (6,7)) >
+                AVG(cs.cs_quantity) FILTER (WHERE d.d_dow NOT IN (6,7))
+           THEN 'Weekend Preferred'
+           ELSE 'Weekday Preferred'
+       END AS preferred_day
+FROM catalog_sales cs
+JOIN item i ON cs.cs_item_sk = i.i_item_sk
+JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+GROUP BY GROUPING SETS ((i.i_item_id, i.i_category, i.i_product_name))
+HAVING COUNT(*) > 500
+ORDER BY preferred_day, avg_weekend_qty DESC
+LIMIT 100;"
+"SELECT ws.ws_order_number, i.i_product_name
+FROM web_sales ws
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+ORDER BY i.i_product_name;"
+"WITH web_summary AS (
+    SELECT ws.ws_item_sk, ws.ws_order_number, ws.ws_ext_list_price,
+           ws.ws_ext_sales_price, ws.ws_ext_discount_amt,
+           d.d_year, d.d_moy, d.d_dom,
+           c.c_customer_id, c.c_first_name, c.c_last_name,
+           ca.ca_state
+    FROM web_sales ws
+    JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+    JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+    JOIN customer_address ca ON c.c_current_addr_sk = ca.ca_address_sk
+    WHERE d.d_year = 2000
+), item_sales AS (
+    SELECT ws_item_sk, SUM(ws_ext_sales_price - ws_ext_discount_amt) AS net_sales
+    FROM web_summary
+    GROUP BY ws_item_sk
+    HAVING SUM(ws_ext_sales_price) > 100000
+)
+SELECT i.i_item_id, i.i_item_desc, isales.net_sales
+FROM item_sales isales
+FULL OUTER JOIN item i ON i.i_item_sk = isales.ws_item_sk
+ORDER BY isales.net_sales DESC NULLS LAST
+LIMIT 100;"
+"SELECT ws_order_number, d_year, i_category
+FROM web_sales ws
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+JOIN customer c ON ws.ws_bill_customer_sk = c.c_customer_sk
+WHERE d.d_year = 2002;"
+"SELECT t_hour, SUM(ws_net_profit) AS total_profit, COUNT(*) AS orders,
+       ROUND(SUM(ws_net_profit) / COUNT(*), 2) AS avg_profit_per_order
+FROM web_sales
+JOIN time_dim ON ws_sold_time_sk = t_time_sk
+GROUP BY t_hour
+ORDER BY avg_profit_per_order DESC
+LIMIT 24;"
+"SELECT DISTINCT c.c_last_name
+FROM customer c
+JOIN store_sales ss ON ss.ss_customer_sk = c.c_customer_sk;"
+"WITH customer_spending AS (
+    SELECT c_customer_id, c_first_name, c_last_name,
+           SUM(ss_ext_sales_price) AS total_spent
+    FROM store_sales
+    JOIN customer ON ss_customer_sk = c_customer_sk
+    GROUP BY c_customer_id, c_first_name, c_last_name
+)
+SELECT *
+FROM customer_spending
+WHERE total_spent > (
+    SELECT AVG(total_spent)
+    FROM customer_spending
+)
+ORDER BY total_spent DESC
+LIMIT 100;"
+"SELECT d_year, COUNT(*) AS nr_comenzi
+FROM web_sales ws
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+GROUP BY d_year
+ORDER BY d_year DESC;"
+"WITH ranked_sales AS (
+  SELECT ws_order_number,
+         RANK() OVER (PARTITION BY ws_bill_customer_sk ORDER BY ws_net_paid DESC) AS ord_rank
+  FROM web_sales
+)
+SELECT COUNT(*) AS nr_top_plati
+FROM ranked_sales
+WHERE ord_rank = 1;"
+"SELECT d_year, AVG(ws_ext_discount_amt) AS discount_mediu
+FROM web_sales ws
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+GROUP BY d_year
+HAVING AVG(ws_ext_discount_amt) > 50;"
+"SELECT cd.cd_marital_status, cd.cd_education_status,
+       COUNT(DISTINCT ws.ws_order_number) AS order_count,
+       SUM(ws.ws_net_paid) AS total_paid
+FROM customer_demographics cd
+JOIN web_sales ws ON cd.cd_demo_sk = ws.ws_ship_customer_sk
+GROUP BY CUBE(cd.cd_marital_status, cd.cd_education_status)
+HAVING COUNT(ws.ws_order_number) > 100
+ORDER BY total_paid DESC
+LIMIT 100;"
+"SELECT c.c_first_name, c.c_last_name
+FROM customer c
+WHERE EXISTS (
+  SELECT 1
+  FROM web_sales ws
+  WHERE ws.ws_bill_customer_sk = c.c_customer_sk
+  AND ws.ws_net_paid > 200
+);"
+"SELECT ss.ss_ticket_number, d.d_year, i.i_brand, SUM(ss.ss_quantity) AS total_qty
+FROM store_sales ss
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+GROUP BY ss.ss_ticket_number, d.d_year, i.i_brand;"
+"SELECT d.d_year, COUNT(DISTINCT ws.ws_order_number) AS nr_comenzi
+FROM web_sales ws
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+GROUP BY d.d_year;"
+"SELECT c_birth_country, COUNT(*) AS nr_clienti
+FROM customer
+GROUP BY c_birth_country
+ORDER BY nr_clienti DESC;"
+"SELECT d.d_year, i.i_category, SUM(ws.ws_net_paid) AS total_plati
+FROM web_sales ws
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+WHERE i.i_category = 'Books'
+GROUP BY d.d_year, i.i_category;"
+"SELECT ws1.ws_order_number,
+       ws1.ws_ext_list_price,
+       ws2.ws_ext_list_price AS next_order_price
+FROM web_sales ws1
+JOIN web_sales ws2 ON ws1.ws_order_number = ws2.ws_order_number - 1
+WHERE ws1.ws_ext_list_price > (
+    SELECT AVG(ws_ext_list_price)
+    FROM web_sales
+    WHERE ws_ship_hdemo_sk IS NOT NULL
+)
+ORDER BY ws1.ws_ext_list_price DESC
+LIMIT 200;"
+"SELECT ca_zip, COUNT(*) 
+FROM customer_address 
+WHERE ca_state = 'NC' 
+GROUP BY ca_zip;"
+"SELECT i_brand, AVG(inv_quantity_on_hand) AS medie_stoc 
+FROM inventory 
+JOIN item ON inv_item_sk = i_item_sk 
+GROUP BY i_brand 
+HAVING AVG(inv_quantity_on_hand) > 100;"
+"SELECT d_year, d_qoy, SUM(ss_ext_list_price) 
+FROM store_sales 
+JOIN date_dim ON ss_sold_date_sk = d_date_sk 
+WHERE ss_wholesale_cost < 100 
+GROUP BY d_year, d_qoy;"
+"SELECT c_last_name, c_first_name 
+FROM customer 
+WHERE c_customer_sk IN (
+  SELECT ws_bill_customer_sk 
+  FROM web_sales 
+  WHERE ws_net_paid BETWEEN 100 AND 200
+);"
+"SELECT p_promo_name, SUM(ss_net_profit) 
+FROM store_sales 
+JOIN promotion ON ss_promo_sk = p_promo_sk 
+GROUP BY p_promo_name;"
+"SELECT 
+    p.p_channel_email,
+    p.p_channel_tv,
+    p.p_purpose,
+    i.i_category,
+    d.d_year,
+    ib.ib_lower_bound,
+    ib.ib_upper_bound,
+    SUM(cs.cs_sales_price) AS total_sales,
+    SUM(cs.cs_net_paid) AS net_paid,
+    COUNT(DISTINCT cs.cs_order_number) AS total_orders
+FROM catalog_sales cs
+JOIN promotion p ON cs.cs_promo_sk = p.p_promo_sk
+JOIN item i ON cs.cs_item_sk = i.i_item_sk
+JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+JOIN customer c ON cs.cs_bill_customer_sk = c.c_customer_sk
+JOIN income_band ib ON c.c_current_hdemo_sk = ib.ib_income_band_sk
+WHERE p.p_discount_active = 'Y'
+  AND d.d_year BETWEEN 2001 AND 2003
+  AND i.i_category IN ('Electronics', 'Books')
+  AND ib.ib_upper_bound <= 80000
+GROUP BY p.p_channel_email, p.p_channel_tv, p.p_purpose, i.i_category, d.d_year, ib.ib_lower_bound, ib.ib_upper_bound
+ORDER BY total_sales DESC;s"
+"SELECT t_hour, d_day_name,
+       COUNT(*) AS num_sales
+FROM store_sales
+JOIN time_dim ON ss_sold_time_sk = t_time_sk
+JOIN date_dim ON ss_sold_date_sk = d_date_sk
+GROUP BY t_hour, d_day_name
+ORDER BY num_sales DESC
+LIMIT 50;"
+"SELECT d.d_month_seq, COUNT(*) AS nr_vanzari 
+FROM web_sales ws 
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk 
+WHERE d_month_seq BETWEEN 1200 AND 1212 
+GROUP BY d.d_month_seq;"
+"SELECT i_item_id, i_item_desc,
+       RANK() OVER (PARTITION BY i_category ORDER BY SUM(ss_ext_sales_price) DESC) AS rank_sales,
+       SUM(ss_ext_sales_price) AS total_sales
+FROM item
+JOIN store_sales ON ss_item_sk = i_item_sk
+GROUP BY i_item_id, i_item_desc, i_category
+HAVING SUM(ss_ext_sales_price) > 10000
+ORDER BY total_sales DESC
+LIMIT 100;"
+"SELECT d.d_year, SUM(ss.ss_net_paid)
+FROM store_sales ss
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+GROUP BY d.d_year
+HAVING SUM(ss.ss_net_paid) > 10000;"
+"SELECT i.i_product_name
+FROM item i
+WHERE i.i_current_price BETWEEN 10 AND 20
+AND EXISTS (
+  SELECT 1 FROM store_sales ss WHERE ss.ss_item_sk = i.i_item_sk
+);"
+"SELECT s.s_store_name, AVG(ss.ss_sales_price)
+FROM store_sales ss
+JOIN store s ON ss.ss_store_sk = s.s_store_sk
+WHERE ss.ss_list_price > 100
+GROUP BY s.s_store_name;"
+"SELECT i.i_category, COUNT(*)
+FROM item i
+WHERE i.i_manufact_id IN (
+  SELECT i_manufact_id FROM item GROUP BY i_manufact_id HAVING COUNT(*) < 100
+)
+GROUP BY i.i_category;"
+"SELECT d.d_year, i.i_brand_id, SUM(ws.ws_net_paid)
+FROM web_sales ws
+JOIN item i ON ws.ws_item_sk = i.i_item_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+GROUP BY d.d_year, i.i_brand_id;"
+"SELECT d.d_year,
+       SUM(CASE WHEN i.i_color = 'red' THEN ss.ss_sales_price ELSE 0 END) AS suma_red,
+       SUM(CASE WHEN i.i_color = 'blue' THEN ss.ss_sales_price ELSE 0 END) AS suma_blue
+FROM store_sales ss
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+JOIN store s ON ss.ss_store_sk = s.s_store_sk
+GROUP BY d.d_year;"
+"SELECT i.i_brand, COUNT(*) 
+FROM item i 
+WHERE i.i_current_price > 50 
+GROUP BY i.i_brand;"
+"SELECT d_year, d_qoy, c_current_cdemo_sk,
+       COUNT(DISTINCT ss_ticket_number) AS total_tickets,
+       SUM(ss_net_profit) AS profit
+FROM store_sales
+JOIN date_dim ON ss_sold_date_sk = d_date_sk
+JOIN customer ON ss_customer_sk = c_customer_sk
+GROUP BY ROLLUP (d_year, d_qoy, c_current_cdemo_sk)
+ORDER BY d_year NULLS LAST, d_qoy, profit DESC;"
+"SELECT c.c_first_name, c.c_last_name 
+FROM customer c 
+WHERE EXISTS (
+  SELECT 1 FROM store_returns sr 
+  WHERE sr.sr_customer_sk = c.c_customer_sk
+);"
+"SELECT d.d_year, AVG(ss.ss_list_price) 
+FROM store_sales ss 
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk 
+GROUP BY d.d_year;"
+"SELECT s.s_store_id, s.s_store_name 
+FROM store s 
+WHERE s.s_number_employees > 100 
+AND s.s_gmt_offset BETWEEN -5 AND 5;"
+"SELECT p.p_promo_name, SUM(ws.ws_ext_discount_amt) 
+FROM web_sales ws 
+JOIN promotion p ON ws.ws_promo_sk = p.p_promo_sk 
+GROUP BY p.p_promo_name;"
+"SELECT ca_state, COUNT(*) 
+FROM customer_address 
+GROUP BY ca_state 
+HAVING COUNT(*) < 50;"
+"SELECT i_item_id, i_brand, AVG(ws_net_paid) AS avg_paid
+FROM web_sales
+JOIN item ON ws_item_sk = i_item_sk
+WHERE ws_sold_date_sk IN (
+    SELECT d_date_sk
+    FROM date_dim
+    WHERE d_month_seq BETWEEN 1200 AND 1224
+)
+GROUP BY CUBE (i_item_id, i_brand)
+HAVING AVG(ws_net_paid) > 100
+ORDER BY avg_paid DESC
+LIMIT 100;"
+"SELECT s.s_store_id, d.d_moy, t.t_hour, COUNT(*) AS num_sales,
+       SUM(ss.ss_net_paid_inc_tax) AS revenue
+FROM store_sales ss
+JOIN store s ON ss.ss_store_sk = s.s_store_sk
+JOIN time_dim t ON ss.ss_sold_time_sk = t.t_time_sk
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+GROUP BY CUBE(s.s_store_id, d.d_moy, t.t_hour)
+HAVING COUNT(*) > 1000
+ORDER BY revenue DESC
+LIMIT 100;"
+"SELECT c_first_name, c_last_name 
+FROM customer 
+WHERE c_preferred_cust_flag = 'Y' AND c_birth_month = 12;"
+"SELECT ss_ticket_number, SUM(ss_ext_sales_price) 
+FROM store_sales 
+GROUP BY ss_ticket_number 
+HAVING SUM(ss_ext_sales_price) > 500;"
+"SELECT ca_state, COUNT(*) 
+FROM customer_address 
+WHERE ca_country = 'United States' 
+GROUP BY ca_state;"
+"SELECT c.c_first_name, c.c_last_name 
+FROM customer c 
+WHERE EXISTS (
+  SELECT 1 FROM web_returns wr 
+  WHERE wr.wr_refunded_customer_sk = c.c_customer_sk
+);"
+"SELECT d.d_year, d.d_qoy, p.p_promo_name,
+       SUM(ws.ws_ext_discount_amt) AS discount_total,
+       SUM(ws.ws_sales_price) AS sales_total,
+       ROUND(100.0 * SUM(ws.ws_ext_discount_amt) / NULLIF(SUM(ws.ws_sales_price), 0), 2) AS discount_pct
+FROM web_sales ws
+JOIN promotion p ON ws.ws_promo_sk = p.p_promo_sk
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+WHERE d.d_year BETWEEN 1999 AND 2001
+GROUP BY ROLLUP(d.d_year, d.d_qoy, p.p_promo_name)
+HAVING SUM(ws.ws_ext_discount_amt) > 100000
+ORDER BY discount_pct DESC
+LIMIT 100;"
+"SELECT i_product_name, i_color 
+FROM item 
+WHERE i_color LIKE '%black%';"
+"SELECT i.i_brand, i.i_class, AVG(cs.cs_ext_ship_cost) AS avg_ship_cost,
+       PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY cs.cs_ext_ship_cost) AS median_ship_cost
+FROM catalog_sales cs
+JOIN item i ON cs.cs_item_sk = i.i_item_sk
+GROUP BY i.i_brand, i.i_class
+HAVING AVG(cs.cs_ext_ship_cost) > 10
+ORDER BY median_ship_cost DESC
+LIMIT 100;"
+"SELECT s.s_store_name, AVG(ss.ss_sales_price) 
+FROM store_sales ss 
+JOIN store s ON ss.ss_store_sk = s.s_store_sk 
+GROUP BY s.s_store_name 
+HAVING AVG(ss.ss_sales_price) < 100;"
+"SELECT d.d_year, COUNT(*) 
+FROM web_sales ws 
+JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk 
+WHERE d.d_year BETWEEN 2000 AND 2002 
+GROUP BY d.d_year;"
+"SELECT c_birth_country, COUNT(*) 
+FROM customer 
+GROUP BY c_birth_country 
+HAVING COUNT(*) < 350;"
+"SELECT s.s_store_name, c.c_first_name || ' ' || c.c_last_name AS full_name,
+       SUM(ss.ss_net_paid) OVER (PARTITION BY s.s_store_name ORDER BY ss.ss_sold_date_sk ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS moving_total
+FROM store_sales ss
+JOIN store s ON ss.ss_store_sk = s.s_store_sk
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+WHERE ss.ss_sold_date_sk BETWEEN 2451000 AND 2452000
+ORDER BY moving_total DESC
+LIMIT 200;"
+"SELECT c.c_first_name, c.c_last_name 
+FROM customer c 
+WHERE EXISTS (
+  SELECT 1 FROM store_returns sr 
+  WHERE sr.sr_customer_sk = c.c_customer_sk 
+  AND sr.sr_return_amt > 100
+);"
+"SELECT ca_city, COUNT(*) 
+FROM customer_address 
+WHERE ca_state = 'TX' 
+GROUP BY ca_city;"
+"SELECT i.i_brand_id, AVG(ss.ss_net_paid) 
+FROM store_sales ss 
+JOIN item i ON ss.ss_item_sk = i.i_item_sk 
+GROUP BY i.i_brand_id;"
+"SELECT ws.ws_order_number, ws.ws_net_paid,
+  (SELECT AVG(ws2.ws_net_paid)
+   FROM web_sales ws2
+   WHERE ws2.ws_order_number <> ws.ws_order_number) AS medie_globala
+FROM web_sales ws
+WHERE ws.ws_net_paid > 500;"
+"SELECT d.d_year, i.i_category, SUM(ss.ss_quantity) AS total_qty
+FROM store_sales ss
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+JOIN item i ON ss.ss_item_sk = i.i_item_sk
+GROUP BY d.d_year, i.i_category
+HAVING SUM(ss.ss_quantity) > (
+  SELECT AVG(sq)
+  FROM (
+    SELECT SUM(ss2.ss_quantity) AS sq
+    FROM store_sales ss2
+    GROUP BY ss2.ss_ticket_number
+  ) AS medii
+);"
+"SELECT d.d_year, i.i_category, SUM(ss.ss_quantity) 
+FROM store_sales ss 
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk 
+JOIN item i ON ss.ss_item_sk = i.i_item_sk 
+GROUP BY d.d_year, i.i_category;"
+"SELECT i_category, COUNT(*) 
+FROM item 
+GROUP BY i_category 
+HAVING COUNT(*) > (
+  SELECT AVG(count_per_category) 
+  FROM (
+    SELECT COUNT(*) AS count_per_category 
+    FROM item 
+    GROUP BY i_category
+  ) AS subquery
+);"
+"SELECT i_brand, AVG(inv_quantity_on_hand) 
+FROM inventory 
+JOIN item ON inv_item_sk = i_item_sk 
+GROUP BY i_brand 
+HAVING AVG(inv_quantity_on_hand) > (
+  SELECT MIN(inv_quantity_on_hand) 
+  FROM inventory
+);"
+"SELECT c_birth_country, COUNT(*) 
+FROM customer 
+GROUP BY c_birth_country 
+HAVING COUNT(*) < (
+  SELECT COUNT(*)/10 
+  FROM customer
+);"
+"SELECT ca_state, COUNT(*) 
+FROM customer_address 
+GROUP BY ca_state 
+HAVING COUNT(*) > (
+  SELECT MAX(city_count) 
+  FROM (
+    SELECT COUNT(*) AS city_count 
+    FROM customer_address 
+    GROUP BY ca_city
+  ) AS max_sub
+);"
+"SELECT s_store_name, COUNT(*) 
+FROM store_sales ss 
+JOIN store s ON ss.ss_store_sk = s.s_store_sk 
+GROUP BY s_store_name 
+HAVING COUNT(*) > (
+  SELECT COUNT(*) 
+  FROM store_sales 
+  WHERE ss_net_paid < 100
+);"
+"SELECT p_promo_name, AVG(ws_quantity) 
+FROM web_sales 
+JOIN promotion ON ws_promo_sk = p_promo_sk 
+GROUP BY p_promo_name 
+HAVING AVG(ws_quantity) > (
+  SELECT AVG(ws_quantity) 
+  FROM web_sales
+);"
+"SELECT d_year, COUNT(*) 
+FROM store_sales ss 
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk 
+GROUP BY d_year 
+HAVING COUNT(*) < (
+  SELECT COUNT(*) 
+  FROM store_sales 
+  WHERE ss_list_price > 150
+);"
+"SELECT c_birth_month, COUNT(*) 
+FROM customer 
+GROUP BY c_birth_month 
+HAVING COUNT(*) < (
+  SELECT AVG(cnt) 
+  FROM (
+    SELECT COUNT(*) AS cnt 
+    FROM customer 
+    GROUP BY c_birth_month
+  ) AS avg_sub
+);"
+"SELECT i.i_category, COUNT(*) 
+FROM item i 
+GROUP BY i.i_category 
+HAVING COUNT(*) > (
+  SELECT COUNT(*) 
+  FROM item 
+  WHERE i_color = 'red'
+);"
+"SELECT ws.ws_order_number 
+FROM web_sales ws 
+WHERE ws.ws_net_paid > 200;"
+"SELECT s.s_store_name, AVG(ss.ss_sales_price) 
+FROM store_sales ss 
+JOIN store s ON ss.ss_store_sk = s.s_store_sk 
+GROUP BY s.s_store_name;"
+"WITH high_value_items AS (
+  SELECT i_item_sk
+  FROM item
+  WHERE i_current_price < 100
+)
+SELECT d.d_year, c.c_birth_country, COUNT(*) AS nr_comenzi
+FROM store_sales ss
+JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+JOIN customer c ON ss.ss_customer_sk = c.c_customer_sk
+JOIN high_value_items hi ON ss.ss_item_sk = hi.i_item_sk
+GROUP BY d.d_year, c.c_birth_country
+HAVING COUNT(*) > 50;"

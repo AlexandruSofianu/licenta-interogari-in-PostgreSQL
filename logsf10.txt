@@ -1,0 +1,46 @@
+2025-06-07 06:57:45,882 INFO o.a.j.u.JMeterUtils: Setting Locale to en_EN
+2025-06-07 06:57:45,918 INFO o.a.j.JMeter: Copyright (c) 1998-2024 The Apache Software Foundation
+2025-06-07 06:57:45,918 INFO o.a.j.JMeter: Version 5.6.3
+2025-06-07 06:57:45,918 INFO o.a.j.JMeter: java.version=24.0.1
+2025-06-07 06:57:45,918 INFO o.a.j.JMeter: java.vm.name=Java HotSpot(TM) 64-Bit Server VM
+2025-06-07 06:57:45,919 INFO o.a.j.JMeter: os.name=Windows Server 2019
+2025-06-07 06:57:45,919 INFO o.a.j.JMeter: os.arch=amd64
+2025-06-07 06:57:45,919 INFO o.a.j.JMeter: os.version=10.0
+2025-06-07 06:57:45,919 INFO o.a.j.JMeter: file.encoding=UTF-8
+2025-06-07 06:57:45,919 INFO o.a.j.JMeter: java.awt.headless=true
+2025-06-07 06:57:45,919 INFO o.a.j.JMeter: Max memory     =1073741824
+2025-06-07 06:57:45,919 INFO o.a.j.JMeter: Available Processors =4
+2025-06-07 06:57:45,938 INFO o.a.j.JMeter: Default Locale=English (EN)
+2025-06-07 06:57:45,938 INFO o.a.j.JMeter: JMeter  Locale=English (EN)
+2025-06-07 06:57:45,939 INFO o.a.j.JMeter: JMeterHome=C:\Program Files\apache-jmeter-5.6.3
+2025-06-07 06:57:45,939 INFO o.a.j.JMeter: user.dir  =C:\Users\Administrator\Desktop\jmeter
+2025-06-07 06:57:45,939 INFO o.a.j.JMeter: PWD       =C:\Users\Administrator\Desktop\jmeter
+2025-06-07 06:57:45,941 INFO o.a.j.JMeter: IP: 172.16.31.213 Name: sofianu-jmeter FullName: sofianu-jmeter
+2025-06-07 06:57:45,942 INFO o.a.j.JMeter: user.classpath=postgresql-42.2.20.jar
+2025-06-07 06:57:45,942 INFO o.a.j.JMeter: Adding to classpath and loader: postgresql-42.2.20.jar
+2025-06-07 06:57:45,970 INFO o.a.j.s.FileServer: Default base='C:\Users\Administrator\Desktop\jmeter'
+2025-06-07 06:57:45,971 INFO o.a.j.s.FileServer: Set new base='C:\Users\Administrator\Desktop\jmeter'
+2025-06-07 06:57:46,432 INFO o.a.j.s.SaveService: Testplan (JMX) version: 2.2. Testlog (JTL) version: 2.2
+2025-06-07 06:57:46,474 INFO o.a.j.s.SaveService: Using SaveService properties version 5.0
+2025-06-07 06:57:46,478 INFO o.a.j.s.SaveService: Using SaveService properties file encoding UTF-8
+2025-06-07 06:57:46,483 INFO o.a.j.s.SaveService: Loading file: jmbench.jmx
+2025-06-07 06:57:46,609 INFO o.a.j.e.StandardJMeterEngine: Running the test!
+2025-06-07 06:57:46,611 INFO o.a.j.s.SampleEvent: List of sample_variables: [resultset_#]
+2025-06-07 06:57:46,611 INFO o.a.j.s.SampleEvent: List of sample_variables: [resultset_#]
+2025-06-07 06:57:47,721 INFO o.a.j.JMeter: Running test (1749304667721)
+2025-06-07 06:57:47,763 INFO o.a.j.e.StandardJMeterEngine: Starting ThreadGroup: 1 : Thread
+2025-06-07 06:57:47,763 INFO o.a.j.e.StandardJMeterEngine: Starting 1 threads for group Thread.
+2025-06-07 06:57:47,763 INFO o.a.j.e.StandardJMeterEngine: Thread will continue on error
+2025-06-07 06:57:47,763 INFO o.a.j.t.ThreadGroup: Starting thread group... number=1 threads=1 ramp-up=1 delayedStart=false
+2025-06-07 06:57:47,770 INFO o.a.j.t.ThreadGroup: Started thread group number 1
+2025-06-07 06:57:47,770 INFO o.a.j.e.StandardJMeterEngine: All thread groups have been started
+2025-06-07 06:57:47,790 INFO o.a.j.t.JMeterThread: Thread started: Thread 1-1
+2025-06-07 06:57:47,792 INFO o.a.j.s.FileServer: Stored: ANALIZA1_formatted.txt
+2025-06-07 06:57:47,822 INFO o.a.j.s.SampleResult: Note: Sample TimeStamps are END times
+2025-06-07 06:57:47,822 INFO o.a.j.s.SampleResult: sampleresult.default.encoding is set to UTF-8
+2025-06-07 06:57:47,822 INFO o.a.j.s.SampleResult: sampleresult.useNanoTime=true
+2025-06-07 06:57:47,822 INFO o.a.j.s.SampleResult: sampleresult.nanoThreadSleep=5000
+2025-06-07 07:29:26,928 INFO o.a.j.t.JMeterThread: Stop Thread seen for thread Thread 1-1, reason: org.apache.jorphan.util.JMeterStopThreadException: End of file:ANALIZA1_formatted.txt detected for CSV DataSet:CSV Queries configured with stopThread:true, recycle:false
+2025-06-07 07:29:26,930 INFO o.a.j.t.JMeterThread: Thread finished: Thread 1-1
+2025-06-07 07:29:26,931 INFO o.a.j.e.StandardJMeterEngine: Notifying test listeners of end of test
+2025-06-07 07:29:26,932 INFO o.a.j.s.FileServer: Close: ANALIZA1_formatted.txt
